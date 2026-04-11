@@ -1,0 +1,36 @@
+# Java
+*.class
+*.jar
+*.war
+*.ear
+
+# IDEs and editors
+/.classpath
+/.project
+/.settings/
+/.idea/
+*.iml
+*.ipr
+*.iws
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build output
+/bin/
+/build/
+/out/
+
+target/
+
+# Logs
+*.log
+
+# Misc
+*.swp
+*.swo
+*.bak
+
+# Ignore all files in bin except .gitkeep
+!bin/.gitkeep
