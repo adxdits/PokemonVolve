@@ -1,3 +1,4 @@
+
 package fr.uge.net.udp.exam2026.ex1;
 
 
@@ -18,7 +19,6 @@ public class ClientPokevolve {
     private final DatagramChannel datagramChannel;
     private final ByteBuffer sendBuffer = ByteBuffer.allocate(1024);
     private final ByteBuffer recBuffer = ByteBuffer.allocate(2028);
-    private int size = 0;
     
 
    private record Packet(String pokemon, String evolution) {
@@ -30,30 +30,32 @@ public class ClientPokevolve {
    private void encode(ByteBuffer buffer, String pokemon) {
 	   buffer.clear();
 	   var name = StandardCharsets.UTF_8.encode(pokemon);
-	  size = name.remaining();
-	   if (buffer.remaining()< Integer.BYTES + size) {
+	   var size = name.remaining();
+	   if (buffer.remaining() < Integer.BYTES + size) {
 		   logger.warning("buffer is too small closing...");
 		   return ;
 	   }
 	   buffer.putInt(size).put(name);
    }
 
-   private Optional<Packet> decode(ByteBuffer buffer, int size) {
-	   if (buffer.remaining() < size) {
-		   logger.warning("buffer is too small closing...");
+   private Optional<Packet> decode(ByteBuffer buffer) {
+	    if (buffer.remaining() < Integer.BYTES) {
+		   logger.warning(" packet is too small");
 		   return Optional.empty();
 	   }
 
-	   var limit1 = buffer.limit();
-	   buffer.limit(size);
-	   var pokemonName = StandardCharsets.UTF_8.decode(buffer).toString();
-	   var evolutionSize = limit1 - Integer.BYTES - size;
-	   buffer.limit(buffer.position() + evolutionSize);
+	   var totalSize = buffer.remaining();
+	   var pokemonSize = buffer.getInt(buffer.position() + totalSize - Integer.BYTES);
+	   var evolutionSize = totalSize - pokemonSize - Integer.BYTES;
 
+	   var savedLimit = buffer.limit();
+	   buffer.limit(buffer.position() + pokemonSize);
+	   var pokemonName = StandardCharsets.UTF_8.decode(buffer).toString();
+
+	   buffer.limit(buffer.position() + evolutionSize);
 	   var evolution = StandardCharsets.UTF_8.decode(buffer).toString();
 
 	   return Optional.of(new Packet(pokemonName, evolution));
-
    }
 
   
@@ -73,7 +75,7 @@ public class ClientPokevolve {
     	recBuffer.clear();
       var sender = datagramChannel.receive(recBuffer);
       recBuffer.flip();
-      var packet = decode(recBuffer, size);
+      var packet = decode(recBuffer);
      packet.ifPresent(System.out::println);
        
     }
