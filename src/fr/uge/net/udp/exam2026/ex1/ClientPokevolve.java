@@ -67,16 +67,15 @@ public class ClientPokevolve {
     	sendBuffer.flip();
     	datagramChannel.send(sendBuffer, serverAddress);
     	
-    	
     	recBuffer.clear();
-      var sender = datagramChannel.receive(recBuffer);
-      recBuffer.flip();
-      var packet = decode(recBuffer);
-      if (packet.isEmpty() || !packet.get().pokemon().equals(Pokemon)) {
-          logger.info("received packet for wrong pokemon, ignoring");
-          continue;
-      }
-     packet.ifPresent(System.out::println);
+    	var sender = datagramChannel.receive(recBuffer);
+    	recBuffer.flip();
+    	var packet = decode(recBuffer);
+    	if (packet.isEmpty() || !packet.get().pokemon().equals(Pokemon)) {
+    	    logger.info("received packet for wrong pokemon, ignoring");
+    	    return;
+    	}
+    	packet.ifPresent(System.out::println);
        
     }
 
