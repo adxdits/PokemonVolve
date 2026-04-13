@@ -6,6 +6,7 @@ import java.net.InetSocketAddress;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -61,22 +62,38 @@ public class ClientPokevolve {
         this.datagramChannel = DatagramChannel.open();
     }
 
-    public void launch(String Pokemon) throws IOException {
+    public void launch(String pokemon) throws IOException {
     	datagramChannel.bind(null);
-    	encode(sendBuffer, Pokemon);
-    	sendBuffer.flip();
-    	datagramChannel.send(sendBuffer, serverAddress);
-    	
-    	recBuffer.clear();
-    	var sender = datagramChannel.receive(recBuffer);
-    	recBuffer.flip();
-    	var packet = decode(recBuffer);
-    	if (packet.isEmpty() || !packet.get().pokemon().equals(Pokemon)) {
-    	    logger.info("received packet for wrong pokemon, ignoring");
-    	    return;
+    	var evolutions = new ArrayList<String>();
+    	evolutions.add(pokemon);
+    	var current = pokemon;
+
+    	while (true) {
+    		encode(sendBuffer, current);
+    		sendBuffer.flip();
+    		datagramChannel.send(sendBuffer, serverAddress);
+
+    		recBuffer.clear();
+    		datagramChannel.receive(recBuffer);
+    		recBuffer.flip();
+    		var packet = decode(recBuffer);
+    		if (packet.isEmpty()) {
+    			logger.info("invalid packet, stopping");
+    			break;
+    		}
+    		var p = packet.get();
+    		if (!p.pokemon().equals(current)) {
+    			logger.info("received packet for wrong pokemon, ignoring");
+    			continue;
+    		}
+    		if (p.pokemon().equals(p.evolution())) {
+    			break;
+    		}
+    		evolutions.add(p.evolution());
+    		current = p.evolution();
     	}
-    	packet.ifPresent(System.out::println);
-       
+
+    	System.out.println(evolutions);
     }
 
     public static void usage() {
