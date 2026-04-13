@@ -1,15 +1,11 @@
-
 package fr.uge.net.udp.exam2026.ex1;
 
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.channels.DatagramChannel;
 import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.logging.Logger;
 
@@ -40,7 +36,7 @@ public class ClientPokevolve {
 
    private Optional<Packet> decode(ByteBuffer buffer) {
 	    if (buffer.remaining() < Integer.BYTES) {
-		   logger.warning(" packet is too small");
+		   logger.info("packet is too small");
 		   return Optional.empty();
 	   }
 
@@ -76,6 +72,10 @@ public class ClientPokevolve {
       var sender = datagramChannel.receive(recBuffer);
       recBuffer.flip();
       var packet = decode(recBuffer);
+      if (packet.isEmpty() || !packet.get().pokemon().equals(Pokemon)) {
+          logger.info("received packet for wrong pokemon, ignoring");
+          continue;
+      }
      packet.ifPresent(System.out::println);
        
     }
